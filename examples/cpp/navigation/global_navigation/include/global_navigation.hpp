@@ -17,7 +17,7 @@ public:
   : GlobalPositionMeasurementInterface(node)
   {
     _timer =
-      node.create_wall_timer(1s, [this] {updateGlobalPosition();});
+      node.create_wall_timer(10ms, [this] {updateGlobalPosition();});
 
     RCLCPP_INFO(node.get_logger(), "example_global_navigation_node running!");
   }

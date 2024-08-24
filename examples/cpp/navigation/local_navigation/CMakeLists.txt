@@ -15,12 +15,13 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(px4_ros2_cpp REQUIRED)
 
 include_directories(include ${Eigen3_INCLUDE_DIRS})
 add_executable(example_local_navigation
         src/main.cpp)
-ament_target_dependencies(example_local_navigation Eigen3 px4_ros2_cpp rclcpp)
+ament_target_dependencies(example_local_navigation Eigen3 px4_ros2_cpp rclcpp nav_msgs)
 
 install(TARGETS
         example_local_navigation

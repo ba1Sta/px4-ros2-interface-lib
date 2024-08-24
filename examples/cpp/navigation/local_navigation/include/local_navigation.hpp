@@ -4,9 +4,9 @@
  ****************************************************************************/
 #pragma once
 
-
 #include <rclcpp/rclcpp.hpp>
 #include <px4_ros2/navigation/experimental/local_position_measurement_interface.hpp>
+#include <nav_msgs/msg/odometry.hpp> // Include for odometry messages
 
 using namespace std::chrono_literals; // NOLINT
 
@@ -18,25 +18,45 @@ public:
       px4_ros2::VelocityFrame::LocalNED)
   {
     _timer =
-      node.create_wall_timer(1s, [this] {updateLocalPosition();});
+      node.create_wall_timer(10ms, [this] {updateLocalPosition();});
+
+    // Create the odometry subscriber
+    _odometry_subscriber = _node.create_subscription<nav_msgs::msg::Odometry>(
+      "/robot0/odometry/imu", 10, std::bind(&LocalNavigationTest::odometryCallback, this, std::placeholders::_1));
 
     RCLCPP_INFO(node.get_logger(), "example_local_navigation_node running!");
   }
 
   void updateLocalPosition()
   {
+    std::lock_guard<std::mutex> lock(_mutex); // Ensure thread safety
     px4_ros2::LocalPositionMeasurement local_position_measurement {};
 
     local_position_measurement.timestamp_sample = _node.get_clock()->now();
 
-    local_position_measurement.velocity_xy = Eigen::Vector2f {1.f, 2.f};
-    local_position_measurement.velocity_xy_variance = Eigen::Vector2f {0.3f, 0.4f};
+    local_position_measurement.position_xy = Eigen::Vector2f {_last_odometry.pose.pose.position.x, _last_odometry.pose.pose.position.y};
+    // local_position_measurement.position_xy_variance = Eigen::Vector2f {_last_odometry.pose.covariance[0], _last_odometry.pose.covariance[7]};
+    local_position_measurement.position_xy_variance = Eigen::Vector2f {0.1f, 0.1f};
+    local_position_measurement.velocity_xy = Eigen::Vector2f {_last_odometry.twist.twist.linear.x, _last_odometry.twist.twist.linear.y};
+    // local_position_measurement.velocity_xy_variance = Eigen::Vector2f {_last_odometry.twist.covariance[0], _last_odometry.twist.covariance[7]};
+    local_position_measurement.velocity_xy_variance = Eigen::Vector2f {0.1f, 0.1f};
 
-    local_position_measurement.position_z = 12.3f;
-    local_position_measurement.position_z_variance = 0.33F;
+    local_position_measurement.position_z = _last_odometry.pose.pose.position.z;
+    // local_position_measurement.position_z_variance = _last_odometry.pose.covariance[14];
+    local_position_measurement.position_z_variance = 0.1f;
 
-    local_position_measurement.attitude_quaternion = Eigen::Quaternionf {0.1, -0.2, 0.3, 0.25};
-    local_position_measurement.attitude_variance = Eigen::Vector3f {0.2, 0.1, 0.05};
+    local_position_measurement.attitude_quaternion = Eigen::Quaternionf(
+                                                                        _last_odometry.pose.pose.orientation.w,
+                                                                        _last_odometry.pose.pose.orientation.x,
+                                                                        _last_odometry.pose.pose.orientation.y,
+                                                                        _last_odometry.pose.pose.orientation.z
+                                                                      );
+    // local_position_measurement.attitude_variance = Eigen::Vector3f {
+    //     static_cast<float>(_last_odometry.pose.covariance[21]),
+    //     static_cast<float>(_last_odometry.pose.covariance[28]),
+    //     static_cast<float>(_last_odometry.pose.covariance[35])
+    // };
+    local_position_measurement.attitude_variance = Eigen::Vector3f {0.1f, 0.1f, 0.1f};
 
     try {
       update(local_position_measurement);
@@ -50,8 +70,17 @@ public:
     }
   }
 
+  void odometryCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
+  {
+    std::lock_guard<std::mutex> lock(_mutex); // Ensure thread safety
+    _last_odometry = *msg;
+  }
+
 private:
   rclcpp::TimerBase::SharedPtr _timer;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr _odometry_subscriber;
+  std::mutex _mutex; // Mutex for thread safety
+  nav_msgs::msg::Odometry _last_odometry;
 };
 
 class ExampleLocalNavigationNode : public rclcpp::Node
