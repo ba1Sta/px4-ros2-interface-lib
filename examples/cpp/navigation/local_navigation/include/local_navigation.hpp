@@ -22,7 +22,7 @@ public:
 
     // Create the odometry subscriber
     _odometry_subscriber = _node.create_subscription<nav_msgs::msg::Odometry>(
-      "/robot0/odometry/imu", 10, std::bind(&LocalNavigationTest::odometryCallback, this, std::placeholders::_1));
+      "/robot1/odometry/imu", 10, std::bind(&LocalNavigationTest::odometryCallback, this, std::placeholders::_1));
 
     RCLCPP_INFO(node.get_logger(), "example_local_navigation_node running!");
   }
