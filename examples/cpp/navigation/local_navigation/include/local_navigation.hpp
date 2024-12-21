@@ -37,15 +37,15 @@ public:
     local_position_measurement.position_xy = Eigen::Vector2f {_last_odometry.pose.pose.position.x, -_last_odometry.pose.pose.position.y};
     // local_position_measurement.position_xy_variance = Eigen::Vector2f {_last_odometry.pose.covariance[0], _last_odometry.pose.covariance[7]};
     local_position_measurement.position_xy_variance = Eigen::Vector2f {0.1f, 0.1f};
-    // local_position_measurement.velocity_xy = Eigen::Vector2f {_last_odometry.twist.twist.linear.x, -_last_odometry.twist.twist.linear.y};
+    local_position_measurement.velocity_xy = Eigen::Vector2f {_last_odometry.twist.twist.linear.x, -_last_odometry.twist.twist.linear.y};
     // local_position_measurement.velocity_xy_variance = Eigen::Vector2f {_last_odometry.twist.covariance[0], _last_odometry.twist.covariance[7]};
-    // local_position_measurement.velocity_xy_variance = Eigen::Vector2f {0.1f, 0.1f};
+    local_position_measurement.velocity_xy_variance = Eigen::Vector2f {0.1f, 0.1f};
 
     local_position_measurement.position_z = -_last_odometry.pose.pose.position.z;
-    // local_position_measurement.velocity_z = -_last_odometry.twist.twist.linear.z;
+    local_position_measurement.velocity_z = -_last_odometry.twist.twist.linear.z;
     // local_position_measurement.position_z_variance = _last_odometry.pose.covariance[14];
     local_position_measurement.position_z_variance = 0.1f;
-    // local_position_measurement.velocity_z_variance = 0.1f;
+    local_position_measurement.velocity_z_variance = 0.1f;
 
     // Transform orientation from FLU to FRD
     // Eigen::Quaternionf orientation_flu(
