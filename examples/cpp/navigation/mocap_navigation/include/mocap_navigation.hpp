@@ -2,6 +2,12 @@
  * Copyright (c) 2023 PX4 Development Team.
  * SPDX-License-Identifier: BSD-3-Clause
  ****************************************************************************/
+
+/****************************************************************************
+ * Note for Optitrack Calibration:
+ * Ground plane frame long axis point to the north, short axis point to the west
+ * in motive streaming settings: select z axis up
+ ****************************************************************************/
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
@@ -35,7 +41,7 @@ public:
       px4_ros2::LocalPositionMeasurement local_position_measurement {};
 
       local_position_measurement.timestamp_sample = _node.get_clock()->now();
-      local_position_measurement.position_xy = Eigen::Vector2f {_last_odometry->rigidbodies[0].pose.position.x, -_last_odometry->rigidbodies[0].pose.position.y};
+      local_position_measurement.position_xy = Eigen::Vector2f {-_last_odometry->rigidbodies[0].pose.position.y, -_last_odometry->rigidbodies[0].pose.position.x};
       // local_position_measurement.position_xy_variance = Eigen::Vector2f {_last_odometry->pose.covariance[0], _last_odometry->pose.covariance[7]};
       local_position_measurement.position_xy_variance = Eigen::Vector2f {0.1f, 0.1f};
       // local_position_measurement.velocity_xy = Eigen::Vector2f {_last_odometry->twist.twist.linear.x, -_last_odometry->twist.twist.linear.y};
@@ -75,8 +81,8 @@ public:
 
       try {
         update(local_position_measurement);
-        RCLCPP_DEBUG(
-          _node.get_logger(),
+        RCLCPP_DEBUG_THROTTLE(
+          _node.get_logger(),*_node.get_clock(), 1000,
           "Successfully sent position update to navigation interface.");
       } catch (const px4_ros2::NavigationInterfaceInvalidArgument & e) {
         RCLCPP_ERROR_THROTTLE(
